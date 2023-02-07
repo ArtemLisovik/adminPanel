@@ -1,6 +1,6 @@
 import {useHttp} from '../../hooks/http.hook';
 import { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch,useSelector } from 'react-redux';
 
 import { heroesFetching, heroesFetched, heroesFetchingError } from '../../actions';
 import HeroesListItem from "../heroesListItem/HeroesListItem";
@@ -12,17 +12,20 @@ import Spinner from '../spinner/Spinner';
 // Удаление идет и с json файла при помощи метода DELETE
 
 const HeroesList = () => {
-    const {heroes, heroesLoadingStatus} = useSelector(state => state);
+    const {heroes, heroesLoadingStatus} = useSelector(state => state.heroes);
+    const {activeFilter} = useSelector(state => state.filters)
     const dispatch = useDispatch();
     const {request} = useHttp();
 
-    useEffect(() => {
+    const getHeroesList = () => {
         dispatch(heroesFetching());
-        request("http://localhost:3001/heroes")
+        request("http://localhost:3002/heroes")
             .then(data => dispatch(heroesFetched(data)))
             .catch(() => dispatch(heroesFetchingError()))
+    }
 
-        // eslint-disable-next-line
+    useEffect(() => {
+        getHeroesList()
     }, []);
 
     if (heroesLoadingStatus === "loading") {
@@ -31,16 +34,20 @@ const HeroesList = () => {
         return <h5 className="text-center mt-5">Ошибка загрузки</h5>
     }
 
-
     const renderHeroesList = (arr) => {
         if (arr.length === 0) {
             return <h5 className="text-center mt-5">Героев пока нет</h5>
         }
         return arr.map(hero => {
-            return <HeroesListItem key={hero.id} {...hero}/>
+            return <HeroesListItem 
+                        key={hero.id} 
+                        {...hero} />
         })
     }
-    const elements = renderHeroesList(heroes);
+
+    const filteredHeroes = activeFilter === 'all' ? heroes : heroes.filter(hero => hero.element === activeFilter)
+    const elements = renderHeroesList(filteredHeroes);
+
     return (
         <ul>
             {elements}
